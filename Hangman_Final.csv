@@ -1,0 +1,139 @@
+import random
+import sys
+from typing import List
+import csv
+
+# TODO try to load these a text file
+f = open('/Users/shresht/Documents/USB COPY/Prog Bas/Files/Final Project/Wordbank.csv', newline='')
+reader = csv.reader(f)
+WORD_LIST = [row[0] for row in reader]
+f.close()
+
+GUESS_WORD: List[str] = []
+SECRET_WORD: str = ""
+ALPHABET: str = "abcdefghijklmnopqrstuvwxyz"
+letter_storage: List[str] = []
+correct_guesses: int = 0
+incorrect_guesses: int = 0
+
+
+def print_word_to_guess(letters: List[str]) -> None:
+    """Utility function to print the current word to guess"""
+    print("Word to guess: {0}".format(" ".join(letters)))
+
+
+def print_guesses_taken(current: int, total: int) -> None:
+    """Prints how many chances the player has used"""
+    print("You are on guess {0}/{1}.".format(current, total))
+
+
+def ask_user_to_play() -> None:
+    """Ask user whether they want to play or not"""
+    while True:
+        game_choice = input("Would you like to play Hangman? (yes/no)").lower()
+        if game_choice == "yes":
+            break
+        elif game_choice == "no":
+            sys.exit("That's a shame! Have a nice day")
+        else:
+            print("Please answer only yes or no.")
+
+
+def prepare_secret_word() -> None:
+    """Prepare secret word and inform user of it"""
+    global SECRET_WORD, GUESS_WORD, LENGTH_WORD
+
+    SECRET_WORD = random.choice(WORD_LIST)
+    LENGTH_WORD = len(SECRET_WORD)
+    GUESS_WORD = ["-"] * LENGTH_WORD
+
+    print("Ok, so the word you need to guess has", LENGTH_WORD, "characters.")
+    print("Be aware that you can enter only 1 letter from a-z. You have 15 Guesses")
+    print("\n")
+    print_word_to_guess(GUESS_WORD)
+
+
+def guessing() -> None:
+    """
+    Main game loop to have user guess letters
+    and inform them of the results
+    """
+    global correct_guesses, incorrect_guesses
+    guess_taken = 1
+    max_guess = 16
+
+    print_guesses_taken(guess_taken, max_guess)
+
+    while guess_taken < max_guess:
+        guess = input("Pick a letter\n").lower()
+
+        if not guess.isalpha():
+            print("Enter a letter from a-z ALPHABET.")
+        elif guess in letter_storage:
+            print("You have already guessed that letter!")
+        elif len(guess) > 1:
+            print("Please enter only one letter at a time.")
+        else:
+            letter_storage.append(guess)
+
+            if guess in SECRET_WORD:
+                print("You guessed correctly!")
+                guess_taken += 1
+                correct_guesses += 1
+                for i in range(0, LENGTH_WORD):
+                    if SECRET_WORD[i] == guess:
+                        GUESS_WORD[i] = guess
+                print_word_to_guess(GUESS_WORD)
+                print_guesses_taken(guess_taken, max_guess)
+
+                if "-" not in GUESS_WORD:
+                    print()
+                    print("You won!")
+                    print("Game Over!")
+                    print("Correct guesses:", correct_guesses)
+                    print("Incorrect guesses:", incorrect_guesses)
+                    play_again()
+                    break
+            else:
+                print("The letter is not in the word. Try again!")
+                incorrect_guesses += 1
+                guess_taken += 1
+                print_guesses_taken(guess_taken, max_guess)
+
+                if guess_taken >= 16:
+                    print(" Sorry mate, you lost :<! The secret word was {0}".format(SECRET_WORD))
+                    print("Correct guesses:", correct_guesses)
+                    print("Incorrect guesses:", incorrect_guesses)
+                    play_again()
+
+
+def play_again() -> None:
+    """Ask user whether they want to play again or not"""
+    while True:
+        game_choice = input("Would you like to play again? (yes/no)").lower()
+        if game_choice == "yes":
+            reset_game_variables()
+            ask_user_to_play()
+            prepare_secret_word()
+            guessing()
+        elif game_choice == "no":
+            sys.exit("That's a shame! Have a nice day")
+        else:
+            print("Please answer only yes or no.")
+
+
+def reset_game_variables() -> None:
+    """Resets game variables for a new game"""
+    global GUESS_WORD, SECRET_WORD, LENGTH_WORD, letter_storage, correct_guesses, incorrect_guesses
+    GUESS_WORD = []
+    SECRET_WORD = ""
+    LENGTH_WORD = 0
+    letter_storage = []
+    correct_guesses = 0
+    incorrect_guesses = 0
+
+
+if __name__ == "__main__":
+    ask_user_to_play()
+    prepare_secret_word()
+    guessing()
